@@ -1,0 +1,53 @@
+const while = function while(name b: bool): (name body: Undefined) => Undefined  {
+  return (name body: Undefined) => !b ? undefined : (body, while(b)(body))
+}
+
+{
+  var i = 0;
+  while (i < 10) ({{
+    jsy.print(i);
+    i = i + 1;
+    undefined;
+  }}) 
+}
+
+jsy.print("---");
+
+interface Listy { h: number; t: Listy }
+const hd = function(l: Listy) {
+  return (<{ h: number; t: Listy }>l).h
+}
+const tl = function(const l: Listy) {
+  return (<{ h: number; t: Listy }>l).t
+}
+
+const Nil = <Listy>null;
+const Cons = function(const h: number, const t: Listy): Listy {
+  return <Listy>{ h: h, t: t }
+}
+
+const Listy = {
+  print: function(c: Listy): Undefined {
+    while (c !== Nil) ({{
+      jsy.print(hd(c));
+      c = tl(c);
+      undefined;
+    }})
+    return undefined
+  }
+}
+
+const l0 = Cons(1, Cons(2, Cons(3, Nil)))
+
+{
+  Listy.print(l0);
+
+  var c = l0;
+  while (c !== Nil) ({{
+    (<{h: number}>c).h = hd(c) * hd(c);
+    c = tl(c);
+    undefined;
+  }});
+
+  Listy.print(l0);
+}
