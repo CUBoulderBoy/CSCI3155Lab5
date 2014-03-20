@@ -11,13 +11,13 @@ const while = function while(name b: bool): (name body: Undefined) => Undefined 
 {
   var i = 0;
   while (i < 10) ({{
-    jsy.print(i);
+    console.log(i);
     i = i + 1;
     undefined;
   }}) 
 }
 
-jsy.print("---");
+console.log("---");
 
 /* Imperative Linked-Lists */
 
@@ -25,19 +25,19 @@ interface Listy { h: number; t: Listy }
 const hd = function(l: Listy) {
   return (<{ h: number; t: Listy }>l).h
 }
-const tl = function(const l: Listy) {
+const tl = function(l: Listy) {
   return (<{ h: number; t: Listy }>l).t
 }
 
 const Nil = <Listy>null;
-const Cons = function(const h: number, const t: Listy): Listy {
+const Cons = function(h: number, t: Listy): Listy {
   return <Listy>{ h: h, t: t }
 }
 
 const Listy = {
-  print: function(c: Listy): Undefined {
+  printy: function(var c: Listy): Undefined {
     while (c !== Nil) ({{
-      jsy.print(hd(c));
+      console.log(hd(c));
       c = tl(c);
       undefined;
     }})
@@ -48,7 +48,7 @@ const Listy = {
 const l0 = Cons(1, Cons(2, Cons(3, Nil)))
 
 {
-  Listy.print(l0);
+  Listy.printy(l0);
 
   var c = l0;
   while (c !== Nil) ({{
@@ -57,5 +57,5 @@ const l0 = Cons(1, Cons(2, Cons(3, Nil)))
     undefined;
   }});
 
-  Listy.print(l0);
+  Listy.printy(l0);
 }

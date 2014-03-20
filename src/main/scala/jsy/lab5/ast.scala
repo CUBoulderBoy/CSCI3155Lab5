@@ -90,7 +90,19 @@ object ast {
   case object TString extends Typ
   case object TUndefined extends Typ
   case object TNull extends Typ
-  case class TFunction(paramse: Params, tret: Typ) extends Typ
+  case class TFunction(paramse: Params, tret: Typ) extends Typ {
+    override def equals(other: Any) = other.isInstanceOf[TFunction] && {
+      other match {
+        case TFunction(oparamse, otret) if otret == tret =>
+          def proj(pe: Params) = pe.fold(
+            { params => Left(params map { case (_,t) => t }) },
+            { case (mode,_,t) => Right((mode, t)) }
+          )
+          proj(oparamse) == proj(paramse)
+        case _ => false
+      }
+    }
+  }
   case class TObj(tfields: Map[String, Typ]) extends Typ
   case class TVar(tvar: String) extends Typ
   case class TInterface(tvar: String, t: Typ) extends Typ

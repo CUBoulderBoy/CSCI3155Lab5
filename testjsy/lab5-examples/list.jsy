@@ -35,7 +35,7 @@ const Any = (function () {
 (function () {
   const a = Any.n(3)     // inject a number
   const n = Any.U(a).n() // pull the number back out (no tag checking)
-  jsy.print(n)
+  console.log(n)
   return undefined
 })();
 
@@ -95,7 +95,7 @@ const Listy = (function () {
 (function () {
   const l1 = Listy.cons(Any.n(2), Listy.cons(Any.n(1), Listy.nil))
   const l2 = Listy.map((d: Any) => Any.n(Any.U(d).n() + 1))(l1)
-  const prn = (l: Listy) => Listy.iter((d: Any) => jsy.print(Any.U(d).n()))(l);
+  const prn = (l: Listy) => Listy.iter((d: Any) => console.log(Any.U(d).n()))(l);
   prn(l1)
   prn(l2)
   return undefined

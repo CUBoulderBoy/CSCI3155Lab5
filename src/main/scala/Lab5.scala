@@ -231,7 +231,7 @@ object Lab5 extends jsy.util.JsyApplication {
 
   /* A small-step transition. */
   def step(e: Expr): DoWith[Mem, Expr] = {
-    require(!isValue(e))
+    require(!isValue(e), "stepping on a value: %s".format(e))
     
     /*** Helpers for Call ***/
     
@@ -318,7 +318,7 @@ object Lab5 extends jsy.util.JsyApplication {
   /*** External Interfaces ***/
 
   this.debug = true // comment this out or set to false if you don't want print debugging information
-  this.maxSteps = Some(100) // comment this out or set to false to not bound the number of steps.
+  this.maxSteps = Some(500) // comment this out or set to None to not bound the number of steps.
   
   def inferType(e: Expr): Typ = {
     if (debug) {
@@ -339,7 +339,7 @@ object Lab5 extends jsy.util.JsyApplication {
   }
   
   def iterateStep(e: Expr): Expr = {
-    require(closed(e))
+    require(closed(e), "not a closed expression: free variables: %s".format(freeVars(e)) )
     def loop(e: Expr, n: Int): DoWith[Mem,Expr] =
       if (Some(n) == maxSteps) throw TerminationError(e)
       else if (isValue(e)) doreturn( e )
