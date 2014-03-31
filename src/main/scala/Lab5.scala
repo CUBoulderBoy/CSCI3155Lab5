@@ -319,11 +319,17 @@ object Lab5 extends jsy.util.JsyApplication {
       case Binary(Times, N(n1), N(n2)) => doreturn( N(n1 * n2) )
       case Binary(Div, N(n1), N(n2)) => doreturn( N(n1 / n2) )
       case If(B(b1), e2, e3) => doreturn( if (b1) e2 else e3 )
+      
+      //DoObject
       case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) =>
         throw new UnsupportedOperationException
+      
+      //DoGetField
       case GetField(a @ A(_), f) =>
         throw new UnsupportedOperationException
-        
+      
+      //DoCall && DoCallRec - Contains:
+      //DoCallName, DoCallRecName, DoCallVar, DoCallRecVar, DoCallRef, DoCallRecRef
       case Call(v1, args) if isValue(v1) =>
         def substfun(e1: Expr, p: Option[String]): Expr = p match {
           case None => e1
@@ -335,14 +341,36 @@ object Lab5 extends jsy.util.JsyApplication {
           case _ => throw StuckError(e)
         } 
       
-      case Decl(MConst, x, v1, e2) if isValue(v1) =>
+      //DoConst
+      case Decl(MConst, x, v1, e2) if isValue(v1) => {
+        doreturn(substitute(e2, v1, x))
+      }
+      
+      //DoVar
+      case Decl(MVar, x, v1, e2) if isValue(v1) => {
         throw new UnsupportedOperationException
-      case Decl(MVar, x, v1, e2) if isValue(v1) =>
-        throw new UnsupportedOperationException
+      }
 
-      case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) =>
+      //DoAssignVar
+      case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) => {
         for (_ <- domodify { (m: Mem) => (throw new UnsupportedOperationException): Mem }) yield v
-        
+      }
+      
+      //DoDeref
+      case Unary(Deref, a) => {
+        throw new UnsupportedOperationException
+      }
+      
+      //DoCast && DoCastNull
+      
+      
+      //DoCastObj
+      
+      
+      
+      
+      
+      
       /*** Fill-in more Do cases here. ***/
       
       /* Base Cases: Error Rules */
