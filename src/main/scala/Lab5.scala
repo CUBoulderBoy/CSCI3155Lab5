@@ -36,10 +36,10 @@ object Lab5 extends jsy.util.JsyApplication {
   
   // Just like mapFirst from Lab 4 but uses a callback f that returns a DoWith in the Some case.
   def mapFirstWith[W,A](f: A => Option[DoWith[W,A]])(l: List[A]): DoWith[W,List[A]] = l match {
-    case Nil => throw new UnsupportedOperationException
+    case Nil => doreturn(l)
     case h :: t => f(h) match {
-      case None => throw new UnsupportedOperationException
-      case Some(withhp) => throw new UnsupportedOperationException
+      case None => (mapFirstWith(f)(t)).map( (a: List[A]) => (h :: a))
+      case Some(withhp) => withhp.map( (a: A) => (a :: t))
     }
   }
 
@@ -48,7 +48,17 @@ object Lab5 extends jsy.util.JsyApplication {
   def castOk(t1: Typ, t2: Typ): Boolean = (t1, t2) match {
     case (TNull, TObj(_)) => true
     case (_, _) if (t1 == t2) => true
-    case (TObj(fields1), TObj(fields2)) => throw new UnsupportedOperationException
+    
+    //If two objects with fields, iterate through the first object's fields
+    //Retrieve the type of the object being cast to and recursively test if
+    //The two types are compatible
+    case (TObj(fields1), TObj(fields2)) => fields1.forall{
+      case (a,b) if (b == None) => true
+      case (a,b) => fields2.get(a) match{
+        case None => true
+        case Some(c) => castOk(b, c)
+      }
+    }
     case (TInterface(tvar, t1p), _) => castOk(typSubstitute(t1p, t1, tvar), t2)
     case (_, TInterface(tvar, t2p)) => castOk(t1, typSubstitute(t2p, t2, tvar))
     case _ => false
@@ -77,6 +87,7 @@ object Lab5 extends jsy.util.JsyApplication {
       case B(_) => TBool
       case Undefined => TUndefined
       case S(_) => TString
+      case Null => TNull
       case Var(x) =>
         val (_, t) = env(x)
         t
@@ -144,6 +155,10 @@ object Lab5 extends jsy.util.JsyApplication {
         case tgot => err(tgot, e1)
       } 
       
+      //TypeDecl
+      case Decl(mode, x, e1, e2) => typeInfer(env + (x -> (mode, typ(e1))), e2)
+      
+      //TypeFunction(s)
       case Function(p, paramse, tann, e1) => {
         // Bind to env1 an environment that extends env with an appropriate binding if
         // the function is potentially recursive.
@@ -154,11 +169,26 @@ object Lab5 extends jsy.util.JsyApplication {
           case (None, _) => env
           case _ => err(TUndefined, e1)
         }
+        
         // Bind to env2 an environment that extends env1 with the parameters.
-        val env2 = paramse match {
-          case Left(params) => throw new UnsupportedOperationException
-          case Right((mode,x,t)) => throw new UnsupportedOperationException
+        // Using either such that left replaces None and Right replaces some
+        // Foreach returns a unit, in order to get the proper return type
+        // of a map, we store env1 in env2 then use foreach to modify env2
+        // on each iteration then throw out the final return unit type
+        val env2 = 
+        paramse match {
+          case Left(params) => params.foldLeft(env1){
+            //envit is the iteration of env1, parit is the iteration of params
+          	case (envit, parit) => parit match{
+          	  case (a, b) => envit + (a -> (MConst, b))
+            }
+          }
+          case Right((mode,x,t)) => mode match{
+            case PName => env1 + (x -> (MConst, t))
+            case _ => env1 + (x -> (MVar, t))
+          }
         }
+        
         // Infer the type of the function body
         val t1 = typeInfer(env2, e1)
         tann foreach { rt => if (rt != t1) err(t1, e1) };
@@ -166,18 +196,30 @@ object Lab5 extends jsy.util.JsyApplication {
       }
       
       case Call(e1, args) => typ(e1) match {
-        case TFunction(Left(params), tret) if (params.length == args.length) => {
+        //If left, then by default all are MConst
+      	case TFunction(Left(params), tret) if (params.length == args.length) => {
           (params, args).zipped.foreach {
-            throw new UnsupportedOperationException
+            case ((x, t), ex) => if (t != typ(ex)) err(t, ex)
           }
           tret
         }
-        case tgot @ TFunction(Right((mode,_,tparam)), tret) =>
-          throw new UnsupportedOperationException
+      	//If right, then the mode is defined
+        case tgot @ TFunction(Right((mode,_,tparam)), tret) => mode match{
+          case badcall if (args.length == 0) => err(tparam, e1)
+          case (PName | PVar) => args.head match{
+            case e => if (tparam == typ(e)) typ(e) else err(tparam, e1)
+          }
+          case PRef => args.head match{
+            case le => typ(le)
+          }
+        }
         case tgot => err(tgot, e1)
       }
       
-      /*** Fill-in more cases here. ***/
+      case Assign(e1, e2) => e1 match{
+        case S(s) => typeInfer(env + (s -> (MVar, typ(e2))), e2)
+        case _ => err(typ(e1), e2)
+      }
         
       /* Should not match: non-source expressions or should have been removed */
       case A(_) | Unary(Deref, _) | InterfaceDecl(_, _, _) => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
@@ -219,8 +261,22 @@ object Lab5 extends jsy.util.JsyApplication {
       case If(e1, e2, e3) => If(subst(e1), subst(e2), subst(e3))
       case Var(y) => if (x == y) esub else e
       case Decl(mut, y, e1, e2) => Decl(mut, y, subst(e1), if (x == y) e2 else subst(e2))
-      case Function(p, paramse, retty, e1) =>
-        throw new UnsupportedOperationException
+      case Function(p, paramse, retty, e1) => {
+        val ret = paramse match{
+          case Left(params) => params.foldLeft(0: Int){
+        	(ret: Int, c: (String, Typ)) => c match{
+        	  case (x2, t) if (x == x2) => ret + 1
+        	  case (x2, t) => ret}
+          }
+          case Right(params) => 0
+        }
+        if (p == Some(x) || (ret != 0)){
+          Function(p, paramse, retty, e1)
+        }
+        else{
+          Function(p, paramse, retty, subst(e1))
+        }
+      }
       case Call(e1, args) => Call(subst(e1), args map subst)
       case Obj(fields) => Obj(fields map { case (fi,ei) => (fi, subst(ei)) })
       case GetField(e1, f) => GetField(subst(e1), f)
