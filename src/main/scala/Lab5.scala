@@ -210,7 +210,8 @@ object Lab5 extends jsy.util.JsyApplication {
             case e => if (tparam == typ(e)) typ(e) else err(tparam, e1)
           }
           case PRef => args.head match{
-            case le => typ(le)
+            case A(a) => tparam
+            case _ => err(tparam, e1)
           }
         }
         case tgot => err(tgot, e1)
@@ -328,6 +329,7 @@ object Lab5 extends jsy.util.JsyApplication {
           case None => e1
           case Some(x) => substitute(e1, v1, x)
         }
+        
         (v1, args) match {
           /*** Fill-in the DoCall cases, the SearchCall2, the SearchCallVar, the SearchCallRef  ***/
           case _ => throw StuckError(e)
