@@ -210,8 +210,7 @@ object Lab5 extends jsy.util.JsyApplication {
             case e => if (tparam == typ(e)) typ(e) else err(tparam, e1)
           }
           case PRef => args.head match{
-            case A(a) => tparam
-            case _ => err(tparam, e1)
+            case a => if (isLExpr(a) &&  tparam == typ(a)) tret else err(tparam, e1)
           }
         }
         case tgot => err(tgot, e1)
@@ -348,8 +347,13 @@ object Lab5 extends jsy.util.JsyApplication {
       
       //DoVar
       case Decl(MVar, x, v1, e2) if isValue(v1) => {
-        throw new UnsupportedOperationException
+        Mem.alloc(v1).map( (a: A) => substitute(e2, a, x) )
+        //domodify( (m: Mem) => (m + kv)).map( (a: A) => substitue(e2, a, x))
       }
+      
+      /*case Unary(Deref, a) => a match{
+        case A(_) => doget.map( (ap: Mem) => ap.apply(a))
+      }*/
 
       //DoAssignVar
       case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) => {
