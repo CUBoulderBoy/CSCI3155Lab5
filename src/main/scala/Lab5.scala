@@ -221,14 +221,13 @@ object Lab5 extends jsy.util.JsyApplication {
         case _ => err(typ(e1), e2)
       }
       
-<<<<<<< Updated upstream
+
       case Unary(Cast(e1), e2) => (castOk(typ(e2), e1)) match{
         case true => e1;
         case false => err(typ(e2), e2);
         }
 
-=======
->>>>>>> Stashed changes
+
       /* Should not match: non-source expressions or should have been removed */
       case A(_) | Unary(Deref, _) | InterfaceDecl(_, _, _) => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
     }
@@ -260,7 +259,7 @@ object Lab5 extends jsy.util.JsyApplication {
   /* Capture-avoiding substitution in e replacing variables x with esub. */
   def substitute(e: Expr, esub: Expr, x: String): Expr = {
     def subst(e: Expr): Expr = substitute(e, esub, x)
-    val ep: Expr = throw new UnsupportedOperationException
+    val ep: Expr = avoidCapture(freeVars(esub), e)
     ep match {
       case N(_) | B(_) | Undefined | S(_) | Null | A(_) => e
       case Print(e1) => Print(subst(e1))
