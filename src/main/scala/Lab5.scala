@@ -221,11 +221,14 @@ object Lab5 extends jsy.util.JsyApplication {
         case _ => err(typ(e1), e2)
       }
       
+<<<<<<< Updated upstream
       case Unary(Cast(e1), e2) => (castOk(typ(e2), e1)) match{
         case true => e1;
         case false => err(typ(e2), e2);
         }
-        
+
+=======
+>>>>>>> Stashed changes
       /* Should not match: non-source expressions or should have been removed */
       case A(_) | Unary(Deref, _) | InterfaceDecl(_, _, _) => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
     }
@@ -325,8 +328,10 @@ object Lab5 extends jsy.util.JsyApplication {
       case If(B(b1), e2, e3) => doreturn( if (b1) e2 else e3 )
       
       //DoObject
-      case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) =>
+      case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) => {
         throw new UnsupportedOperationException
+        //Mem.alloc(e)
+      }
       
       //DoGetField
       case GetField(a @ A(_), f) =>
