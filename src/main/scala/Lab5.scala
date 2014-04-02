@@ -360,19 +360,13 @@ object Lab5 extends jsy.util.JsyApplication {
         //domodify( (m: Mem) => (m + kv)).map( (a: A) => substitute(e2, a, x))
       }
       
-      case Unary(Deref, a) => {
-        //doget.map( (ap: Mem) => ap.apply(a))
-        throw new UnsupportedOperationException
+      case Unary(Deref, a @ A(_)) => {
+        doget.map( (ap: Mem) => ap.apply(a))
       }
 
       //DoAssignVar
       case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) => {
         for (_ <- domodify { (m: Mem) => (throw new UnsupportedOperationException): Mem }) yield v
-      }
-      
-      //DoDeref
-      case Unary(Deref, a) => {
-        throw new UnsupportedOperationException
       }
       
       //DoCast && DoCastNull
