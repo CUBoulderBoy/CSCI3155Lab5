@@ -375,10 +375,6 @@ object Lab5 extends jsy.util.JsyApplication {
       //DoCastObj
 
 
-
-
-
-
       /*** Fill-in more Do cases here. ***/
 
       /* Base Cases: Error Rules */
