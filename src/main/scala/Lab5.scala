@@ -328,13 +328,15 @@ object Lab5 extends jsy.util.JsyApplication {
 
       //DoObject
       case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) => {
-        throw new UnsupportedOperationException
-        //Mem.alloc(e)
+       
+        Mem.alloc(e).map( (a: A) => e)
       }
 
       //DoGetField
-      case GetField(a @ A(_), f) =>
-        throw new UnsupportedOperationException
+      case GetField(a @ A(_), f) => doget(a) match {
+        case f => throw new NullDereferenceError(e)
+        
+      }
 
       //DoCall && DoCallRec - Contains:
       //DoCallName, DoCallRecName, DoCallVar, DoCallRecVar, DoCallRef, DoCallRecRef
@@ -345,6 +347,11 @@ object Lab5 extends jsy.util.JsyApplication {
         }
 
         (v1, args) match {
+          //case (Function(p, params, tann, e1), args) =>
+           // val zippedp = (params, args)zipped.foreach { case ((_, (modei, _)), argi) => argApplyable(modei, argi)
+             
+           // }
+          
           /*** Fill-in the DoCall cases, the SearchCall2, the SearchCallVar, the SearchCallRef  ***/
           case _ => throw StuckError(e)
         }
@@ -366,7 +373,7 @@ object Lab5 extends jsy.util.JsyApplication {
 
       //DoAssignVar
       case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) => {
-        for (_ <- domodify { (m: Mem) => (throw new UnsupportedOperationException): Mem }) yield v
+        for (_ <- domodify { (m: Mem) => m.+(a, v): Mem }) yield v
       }
 
       //DoCast && DoCastNull
