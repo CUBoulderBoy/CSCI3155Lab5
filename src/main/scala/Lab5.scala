@@ -216,9 +216,9 @@ object Lab5 extends jsy.util.JsyApplication {
         case tgot => err(tgot, e1)
       }
 
-      case Assign(e1, e2) => e1 match{
+      case Assign(x, e2) => x match{
         case S(s) => typeInfer(env + (s -> (MVar, typ(e2))), e2)
-        case _ => err(typ(e1), e2)
+        case _ => err(typ(x), e2)
       }
 
 
@@ -332,9 +332,13 @@ object Lab5 extends jsy.util.JsyApplication {
       }
 
       //DoGetField
-      case GetField(a @ A(_), f) => doget(a) match {
-        case f => throw new NullDereferenceError(e)
-        
+      case GetField(a @ A(_), f) => {
+        doget.map((m: Mem) => m.get(a) match {
+          case Some(Obj(fields)) => fields.get(f) match {
+            case Some(field) => field
+          }
+          case _ => throw StuckError(e)
+        })
       }
 
       //DoCall && DoCallRec - Contains:
@@ -347,16 +351,22 @@ object Lab5 extends jsy.util.JsyApplication {
 
         (v1, args) match {
           case (Function(p, params, tann, e1), args) => params match {
-            case Right(params) => {
-              throw StuckError(e)
-            }
-            case Left(params) => {
+            case Left(params) => doreturn(substfun((params, args).zipped.foldRight(e1){
+              (vars: ((String, Typ), Expr), acc: Expr) => (vars, acc) match {
+                case (((x, t), v1), e1) => substitute(e1, v1, x)
+              }
+            }, p))
+            case Right(params) if isValue(args.head)=> params match{
+              case (mode, x, t) => mode match{
+                //If PName, normal substitution, use args.head to access only element in the args list
+                case PName => doreturn(substfun(substitute(e1, args.head, x), p))
+                case PVar => (Mem.alloc(args.head) map ( (a: A) => substitute(e1, Unary(Deref, a), x) )) map ( 
+                    (a: Expr) => substfun(substitute(e1, a, x), p))
+                case PRef if isLValue(args.head) => doreturn(substfun(substitute(e1, args.head, x), p))
+              }
               throw StuckError(e)
             }
           }
-           // val zippedp = (params, args)zipped.foreach { case ((_, (modei, _)), argi) => argApplyable(modei, argi)
-             
-           // }
           
           /*** Fill-in the DoCall cases, the SearchCall2, the SearchCallVar, the SearchCallRef  ***/
           case _ => throw StuckError(e)
