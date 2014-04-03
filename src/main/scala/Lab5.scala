@@ -355,6 +355,10 @@ object Lab5 extends jsy.util.JsyApplication {
           /*** Fill-in the DoCall cases, the SearchCall2, the SearchCallVar, the SearchCallRef  ***/
           case _ => throw StuckError(e)
         }
+        
+        /*
+         * 
+         */
 
       //DoConst
       case Decl(MConst, x, v1, e2) if isValue(v1) => {
@@ -363,8 +367,8 @@ object Lab5 extends jsy.util.JsyApplication {
 
       //DoVar
       case Decl(MVar, x, v1, e2) if isValue(v1) => {
-        Mem.alloc(v1).map( (a: A) => substitute(e2, a, x) )
-        //domodify( (m: Mem) => (m + kv)).map( (a: A) => substitute(e2, a, x))
+        // Memory allocation using Mem.alloc()
+        Mem.alloc(v1) map ( (a: A) => substitute(e2, Unary(Deref, a), x) )
       }
       
       case Unary(Deref, a @ A(_)) => {
