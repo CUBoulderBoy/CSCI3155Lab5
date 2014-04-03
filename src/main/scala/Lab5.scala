@@ -328,7 +328,6 @@ object Lab5 extends jsy.util.JsyApplication {
 
       //DoObject
       case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) => {
-       
         Mem.alloc(e).map( (a: A) => e)
       }
 
@@ -347,7 +346,14 @@ object Lab5 extends jsy.util.JsyApplication {
         }
 
         (v1, args) match {
-          //case (Function(p, params, tann, e1), args) =>
+          case (Function(p, params, tann, e1), args) => params match {
+            case Right(params) => {
+              throw StuckError(e)
+            }
+            case Left(params) => {
+              throw StuckError(e)
+            }
+          }
            // val zippedp = (params, args)zipped.foreach { case ((_, (modei, _)), argi) => argApplyable(modei, argi)
              
            // }
