@@ -216,9 +216,20 @@ object Lab5 extends jsy.util.JsyApplication {
         case tgot => err(tgot, e1)
       }
 
-      case Assign(x, e2) => x match{
-        case S(s) => typeInfer(env + (s -> (MVar, typ(e2))), e2)
-        case _ => err(typ(x), e2)
+      case Assign(e1, e2) => e1 match{
+        case Var(x) => env.get(x) match {
+          case Some((MConst, t)) => err(typ(e1), e2)
+          case Some((MVar, t)) => if (t == typ(e2)) {
+        	  typeInfer(env + (x -> (MVar, typ(e2))), e2)
+          	} else{
+          		err(typ(e1), e2)
+          	}  
+          case _ => typeInfer(env + (x -> (MVar, typ(e2))), e2)
+        }
+        case GetField(x1, f) => typ(e1) match {
+          case t => typeInfer(env + (f -> (MConst, typ(e1))), e2)
+        }
+        case _ => err(typ(e1), e2)
       }
 
 
