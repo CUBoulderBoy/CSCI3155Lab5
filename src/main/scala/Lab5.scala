@@ -408,18 +408,21 @@ object Lab5 extends jsy.util.JsyApplication {
       }
       
       //DoAssignField
-      case Assign(GetField(a @ A(_), f), v) if isValue(v) => { 
-        for (_ <- domodify { (m: Mem) => {
-          //m.apply(a) returns an expr with the fields related to the address
-          //fields is a map of string and values. Problem is this return an expr not a map
-          //can we change an expr to a map? if so we just need to use "+" to remap the string
-          //f to v newmap + (f -> v) etc. Then map that map back into memory via the adress
-          val newmap: Map[String, Expr] = m.apply(a)
-          
+      case Assign(GetField(a @ A(_),f), v) if isValue(v) => 
+        for(_ <- domodify { 
+          (m: Mem) => {
+            if(m.contains(a)){
+              val obj = m(a)
+              val newobj = obj match {
+                case Obj(fields) => Obj( fields + (f -> (v)))
+                case _ => throw StuckError(e)
+              }
+              m + (a -> newobj)
+            }
+            else m
           }
-          newmap + (fields.f, v): Mem }) yield v
         }
-      }
+      ) yield v
 
       //DoCast && DoCastNull
       case Unary(Cast(t), e1) if isValue(e1) => t match {
@@ -468,8 +471,11 @@ object Lab5 extends jsy.util.JsyApplication {
       case Call(e1, e2) => {
         for (e1p <- step(e1)) yield Call(e1p, e2)
       }
+      case Assign(e1, e2) if isLValue(e1) && !isValue(e2)=> {
+    	for (e2p <- step(e2)) yield Assign(e1, e2p)
+  	  }
       case Assign(e1, e2) => {
-        for (e2p <- step(e2)) yield Assign(e1, e2p)
+        for (e1p <- step(e1)) yield Assign(e1p, e2)
       }
       /* Everything else is a stuck error. */
       case _ => throw StuckError(e)
