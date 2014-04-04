@@ -408,9 +408,17 @@ object Lab5 extends jsy.util.JsyApplication {
       }
       
       //DoAssignField
-      case Assign(GetField(a @ A(_), f), v) if isValue(v) => {
-        
-        for (_ <- domodify { (m: Mem) => m + (fields.f, v): Mem }) yield v
+      case Assign(GetField(a @ A(_), f), v) if isValue(v) => { 
+        for (_ <- domodify { (m: Mem) => {
+          //m.apply(a) returns an expr with the fields related to the address
+          //fields is a map of string and values. Problem is this return an expr not a map
+          //can we change an expr to a map? if so we just need to use "+" to remap the string
+          //f to v newmap + (f -> v) etc. Then map that map back into memory via the adress
+          val newmap: Map[String, Expr] = m.apply(a)
+          
+          }
+          newmap + (fields.f, v): Mem }) yield v
+        }
       }
 
       //DoCast && DoCastNull
