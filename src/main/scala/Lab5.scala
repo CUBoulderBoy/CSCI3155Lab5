@@ -404,7 +404,13 @@ object Lab5 extends jsy.util.JsyApplication {
 
       //DoAssignVar
       case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) => {
-        for (_ <- domodify { (m: Mem) => m.+(a, v): Mem }) yield v
+        for (_ <- domodify { (m: Mem) => m + (a, v): Mem }) yield v
+      }
+      
+      //DoAssignField
+      case Assign(GetField(a @ A(_), f), v) if isValue(v) => {
+        
+        for (_ <- domodify { (m: Mem) => m + (fields.f, v): Mem }) yield v
       }
 
       //DoCast && DoCastNull
