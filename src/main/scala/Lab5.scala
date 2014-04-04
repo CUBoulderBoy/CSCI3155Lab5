@@ -337,11 +337,6 @@ object Lab5 extends jsy.util.JsyApplication {
       case Binary(Div, N(n1), N(n2)) => doreturn( N(n1 / n2) )
       case If(B(b1), e2, e3) => doreturn( if (b1) e2 else e3 )
 
-      //DoObject
-      case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) => {
-        Mem.alloc(e).map( (a: A) => e)
-      }
-
       //DoGetField
       case GetField(a @ A(_), f) => {
         doget.map((m: Mem) => m.get(a) match {
