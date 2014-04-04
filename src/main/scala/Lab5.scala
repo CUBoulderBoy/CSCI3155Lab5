@@ -286,7 +286,7 @@ object Lab5 extends jsy.util.JsyApplication {
         	  case (x2, t) if (x == x2) => ret + 1
         	  case (x2, t) => ret}
           }
-          case Right(params) => 0
+          case Right((_,name,_)) => x == name
         }
         if (p == Some(x) || (ret != 0)){
           Function(p, paramse, retty, e1)
@@ -347,6 +347,7 @@ object Lab5 extends jsy.util.JsyApplication {
         doget.map((m: Mem) => m.get(a) match {
           case Some(Obj(fields)) => fields.get(f) match {
             case Some(field) => field
+            case _ => throw StuckError(e)
           }
           case _ => throw StuckError(e)
         })
@@ -361,31 +362,35 @@ object Lab5 extends jsy.util.JsyApplication {
         }
 
         (v1, args) match {
-          case (Function(p, params, tann, e1), args) => params match {
-            case Left(params) => doreturn(substfun((params, args).zipped.foldRight(e1){
+          case (Function(p, Left(params), tann, e1), args) if params.length == args.length => {
+            doreturn(substfun((params, args).zipped.foldRight(e1){
               (vars: ((String, Typ), Expr), acc: Expr) => (vars, acc) match {
                 case (((x, t), v1), e1) => substitute(e1, v1, x)
               }
             }, p))
-            case Right(params) if isValue(args.head)=> params match{
-              case (mode, x, t) => mode match{
-                //If PName, normal substitution, use args.head to access only element in the args list
-                case PName => doreturn(substfun(substitute(e1, args.head, x), p))
-                case PVar => (Mem.alloc(args.head) map ( (a: A) => substitute(e1, Unary(Deref, a), x) )) map ( 
-                    (a: Expr) => substfun(substitute(e1, a, x), p))
-                case PRef if isLValue(args.head) => doreturn(substfun(substitute(e1, args.head, x), p))
-              }
-              throw StuckError(e)
-            }
+          }
+          // DoCall Functions
+          case (Function(p, Right((PVar, x1, _)), _, e1), v2 :: Nil) if isValue(v2) => {
+            Mem.alloc(v2) map {a => substfun(substitute(e1, Unary(Deref, a), x1), p)}
+          }
+          case (Function(p, Right((PRef, x1, _)), _, e1), lv2 :: Nil) if isLValue(lv2) => {
+            doreturn(substfun(substitute(e1, lv2, x1), p))
+          }
+          case (Function(p, Right((PName, x1, _)), _, e1), e2 :: Nil) => {
+            doreturn(substfun(substitute(e1, e2, x1), p))
+          }
+
+          // SearchCall Functions
+          case (Function(p, Right((PVar, x, _)), _, e1), e2 :: Nil) => {
+            step(e2) map {e2p => Call(v1, e2p :: Nil)}
+          }
+
+          case (Function(p, Right((PRef, x1, _)), _, e1), e2 :: nil) => {
+            step(e2) map {e2p => Call(v1, e2p :: Nil)}
           }
           
-          /*** Fill-in the DoCall cases, the SearchCall2, the SearchCallVar, the SearchCallRef  ***/
           case _ => throw StuckError(e)
         }
-        
-        /*
-         * 
-         */
 
       //DoConst
       case Decl(MConst, x, v1, e2) if isValue(v1) => {
@@ -408,12 +413,15 @@ object Lab5 extends jsy.util.JsyApplication {
       }
 
       //DoCast && DoCastNull
+      case Unary(Cast(t), e1) if isValue(e1) => t match {
+        case TNull => doreturn(null)
+        case _=> doreturn(e1)
+      }
 
-
-      //DoCastObj
-
-
-      /*** Fill-in more Do cases here. ***/
+      //DoObject
+      case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) => {
+        Mem.alloc(e).map( (a: A) => a)
+      }
 
       /* Base Cases: Error Rules */
       /*** Fill-in cases here. ***/
@@ -452,7 +460,7 @@ object Lab5 extends jsy.util.JsyApplication {
         for (e1p <- step(e1)) yield Call(e1p, e2)
       }
       case Assign(e1, e2) => {
-        for (e2p <- step(e2)) yield Assign(e1, e2)
+        for (e2p <- step(e2)) yield Assign(e1, e2p)
       }
       /* Everything else is a stuck error. */
       case _ => throw StuckError(e)
